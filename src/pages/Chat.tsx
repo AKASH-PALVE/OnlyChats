@@ -9,11 +9,17 @@ import { generateRoomId } from "../../lib/utils";
 import { BsFillSendFill } from "react-icons/bs";
 import Footer from "../components/Footer";
 
+interface Message {
+  message: string;
+  senderId: string;
+}
+
 const Chat = ()=> {
   const navigate = useNavigate();
   const inviteCodeRef = useRef<HTMLDivElement>(null);
   const [isCopied, setIsCopied] = useState(false);
-  const [messages, setMessages] = useState<string[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [myUserId, setMyUserId] = useState("");
   const wsRef = useRef<WebSocket>();
   const [params, setParams] = useSearchParams();
   const [roomId, setRoomId] = useState<string>(
@@ -28,9 +34,25 @@ const Chat = ()=> {
 
   useEffect(()=>{
     const ws = new WebSocket(BACKEND_URL);
+
     ws.onmessage = (event) =>{
-      setMessages((m) => [...m, event.data]);
+      //console.log("Received:", event.data); // added this line : console test
+      
+      //const data : Message = JSON.parse(event.data);
+      //console.log(data); 
+
+      const data = JSON.parse(event.data);
+
+      if (data.type === "connected") {
+        console.log("My User ID:", data.userId);
+        setMyUserId(data.userId);
+        return;
+      }
+      console.log("Received object:", data);
+      setMessages((m) => [...m, data]);
     };
+
+  
     wsRef.current = ws;
 
     if(!roomId){
@@ -124,35 +146,54 @@ const Chat = ()=> {
             </div>
           </div>
           <section className="bg-neutral-100 dark:bg-neutral-800/40 w-3/4 md:w-2/3 h-full rounded-xl border dark:border-neutral-700 shadow-md relative flex flex-col">
-            <div className="overflow-y-scroll flex-1 sm:pl-12 sm:pr-6 pl-6 pr-4 py-4 flex flex-col items-end no-scrollbar">
+            <div className="overflow-y-auto flex-1 px-6 py-6 flex flex-col gap-2 no-scrollbar">
+              
               {messages.length === 0 && (
                 <div className="text-neutral-600 dark:text-neutral-300 text-sm sm:text-base font-semibold h-full flex items-center justify-center self-center">
                   Start a conversation!
                 </div>
               )}
-              {messages.map((message, index) => (
+
+              {messages.map((message, index) => {
+              const isMine = message.senderId === myUserId;
+
+              return (
                 <div
                   key={index}
-                  ref={messageRef}
-                  className="bg-blue-500 mt-2 w-fit py-2 px-4 rounded-3xl text-white break-words whitespace-pre-wrap max-w-[99%] text-sm sm:text-base"
+                  className={`w-full flex mt-3 ${
+                    isMine ? "justify-end" : "justify-start"
+                  }`}
                 >
-                  {message}
+                  <div
+                    ref={index === messages.length - 1 ? messageRef : null}
+                    className={`max-w-[75%] px-4 py-3 rounded-2xl shadow-md break-words whitespace-pre-wrap
+                    transition-all duration-300
+                    ${
+                      isMine
+                        ? "bg-blue-500 text-white rounded-br-md animate-right"
+                        : "bg-gray-200 dark:bg-neutral-700 text-black dark:text-white rounded-bl-md animate-left"
+                    }`}
+                  >
+                    {message.message}
+                  </div>
                 </div>
-              ))}
+              );
+            })}
             </div>
             <div className="flex-none rounded-full w-full py-3">
               <form
                 onSubmit={onSubmitHandler}
-                className="border flex items-center justify-between  gap-3 bg-white dark:bg-neutral-700 dark:border-neutral-600 w-5/6 mx-auto rounded-full px-4 py-1.5"
+                className="border shadow-lg flex items-center justify-between gap-3 bg-white dark:bg-neutral-700 dark:border-neutral-600 w-11/12 sm:w-5/6 mx-auto rounded-full px-5 py-3"
               >
                 <input
                   type="text"
-                  className="font-medium outline-none w-full bg-transparent"
+                  className="font-medium outline-none w-full bg-transparent text-base placeholder:text-gray-400"
                   autoFocus
                   ref={inputRef}
+                  placeholder="Type a message..."
                 />
                 <button type="submit">
-                  <BsFillSendFill className="text-xl hover:scale-105 cursor-pointer" />
+                  <BsFillSendFill className="text-2xl text-blue-500 hover:text-blue-600 hover:scale-110 transition-all duration-200 cursor-pointer" />
                 </button>
               </form>
             </div>
