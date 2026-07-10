@@ -115,7 +115,7 @@ const Chat = ()=> {
     <div>
       <div className="h-screen flex flex-col">
         <Header />
-        <main className="flex flex-1 justify-center items-center flex-col dark:bg-neutral-900 dark:text-neutral-100 text-neutral-800 max-h-[calc(100vh-4rem)] py-28">
+        <main className="flex flex-1 justify-center items-center flex-col dark:bg-blue-300 dark:text-neutral-100 text-neutral-800 max-h-[calc(100vh-4rem)] py-28">
           <div className="flex justify-between items-center w-3/4 md:w-2/3 px-4 mb-4 font-bold sm:text-lg sm:flex-row flex-col gap-4">
             <button
               onClick={() => {
